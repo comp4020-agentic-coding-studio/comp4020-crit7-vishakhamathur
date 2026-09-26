@@ -169,14 +169,14 @@ function seedDegreeRules(): void {
     "COMP4450",
   ]);
 
-  // Comp Elective is 7 courses (one compulsory 4000-level, two either
+  // Comp Elective is 5 courses (one compulsory 4000-level, two either
   // 3000-or-4000-level, the rest any level) — a level-by-level breakdown
   // this prototype doesn't model (see the README's judgement-call note), but
-  // the unit total is fixed regardless: 7 courses x 6 units = 42. University
+  // the unit total is fixed regardless: 5 courses x 6 units = 30. University
   // Elective is a flat 48 units — General Electives alone, not merged with
   // anything computing-related. Both are the same across every catalogue
   // year modelled, unlike Compulsory's list.
-  const COMP_ELECTIVE_UNITS = 42;
+  const COMP_ELECTIVE_UNITS = 30;
   const UNIVERSITY_ELECTIVE_UNITS = 48;
 
   const yearRows = (year: number, compulsoryUnits: number, compulsoryList: string) => [

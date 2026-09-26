@@ -27,7 +27,7 @@ P&C page just slices the remaining "further study" units into finer
 either/or bullets that don't amount to a genuine structural difference.
 University Elective is a flat 48 units every year — General Electives
 alone, not merged with anything computing-related. Comp Elective is a flat
-42 units every year too: 7 courses (one compulsory 4000-level, two either
+30 units every year too: 5 courses (one compulsory 4000-level, two either
 3000- or 4000-level, the rest any level), a level-by-level breakdown this
 prototype doesn't enforce (see "what's a judgement call" below), but shows
 as a reminder note next to the category. Completed courses are stored once
