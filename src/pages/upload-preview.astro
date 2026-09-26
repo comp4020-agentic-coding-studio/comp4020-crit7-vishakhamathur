@@ -1,0 +1,115 @@
+---
+import {
+  excludeAlreadyCompleted,
+  extractCourseCodes,
+  guessCategory,
+} from "../lib/course-extraction";
+import { listCompletedCourses, listDegreeRules, listYears } from "../lib/db";
+import { extractPdfText } from "../lib/parse-transcript";
+import "../styles.css";
+
+// This page only ever renders as the result of the upload form's POST below
+// — a bare GET (nothing to preview) just bounces home. Reachable only via a
+// real upload, so it's deliberately not in spec/routes.ts.
+if (Astro.request.method !== "POST") {
+  return Astro.redirect("/");
+}
+
+const form = await Astro.request.formData();
+const year = Number(form.get("year"));
+const file = form.get("transcript");
+
+const MAX_SIZE = 5 * 1024 * 1024;
+
+if (
+  !listYears().includes(year) ||
+  !(file instanceof File) ||
+  file.type !== "application/pdf" ||
+  file.size === 0 ||
+  file.size > MAX_SIZE
+) {
+  return Astro.redirect(`/?year=${year}&error=upload`);
+}
+
+let text: string;
+try {
+  text = await extractPdfText(Buffer.from(await file.arrayBuffer()));
+} catch {
+  return Astro.redirect(`/?year=${year}&error=upload`);
+}
+
+const rules = listDegreeRules(year);
+const completed = listCompletedCourses();
+const codes = excludeAlreadyCompleted(
+  extractCourseCodes(text),
+  completed.map((c) => c.courseCode),
+);
+const rows = codes.map((code) => ({ code, category: guessCategory(code, rules) }));
+---
+
+<!doctype html>
+<html lang="en-AU">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Detected courses — Degree progress tracker</title>
+  </head>
+  <body>
+    <nav aria-label="site">
+      <a href="/">Tracker</a>
+    </nav>
+    <main>
+      <h1>Detected courses</h1>
+
+      {rows.length === 0 ? (
+        <p>
+          No new course codes found in that PDF — either everything in it is
+          already recorded, or it isn't a text-based ANU Statement of Result.
+          <a href={`/?year=${year}`}>Back to the tracker</a>.
+        </p>
+      ) : (
+        <>
+          <p>
+            Review each detected course before it's added — nothing is saved
+            yet. Uncheck any that don't belong, and fix the unit count or
+            category where the guess is wrong.
+          </p>
+          <form method="post" action="/api/completed-courses/from-pdf">
+            <input type="hidden" name="year" value={year} />
+            <ul class="detected-courses">
+              {rows.map((row) => (
+                <li>
+                  <label>
+                    <input type="checkbox" name="include" value={row.code} checked />
+                    {row.code}
+                  </label>
+                  <label>
+                    Units
+                    <input
+                      type="number"
+                      name={`units_${row.code}`}
+                      min="1"
+                      max="48"
+                      value="6"
+                    />
+                  </label>
+                  <label>
+                    Category
+                    <select name={`category_${row.code}`}>
+                      {rules.map((rule) => (
+                        <option value={rule.category} selected={rule.category === row.category}>
+                          {rule.category}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </li>
+              ))}
+            </ul>
+            <button>Add selected courses</button>
+          </form>
+        </>
+      )}
+    </main>
+  </body>
+</html>

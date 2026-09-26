@@ -1,11 +1,13 @@
 ---
 import { getProgress, listYears } from "../lib/db";
+import { categoryAnchor } from "../lib/slug";
 import "../styles.css";
 
 const years = listYears();
 const requested = Number(Astro.url.searchParams.get("year"));
 const year = years.includes(requested) ? requested : years.includes(2024) ? 2024 : years[0];
 const progress = getProgress(year);
+const uploadError = Astro.url.searchParams.get("error") === "upload";
 ---
 
 <!doctype html>
@@ -18,22 +20,18 @@ const progress = getProgress(year);
   <body>
     <nav aria-label="site">
       <a href="/">Tracker</a>
-      <a href="/readme/">About</a>
     </nav>
-    <main>
-      <div class="masthead">
-        <img src="/anu-crest.svg" alt="Australian National University crest" width="56" height="58" />
-        <h1>Degree progress tracker</h1>
+    <header class="hero">
+      <div class="hero-inner">
+        <div class="masthead">
+          <img src="/anu-crest.svg" alt="Australian National University crest" width="56" height="58" />
+          <h1>DEGREE PROGRESS TRACKER</h1>
+        </div>
       </div>
-      <p>
-        Bachelor of Advanced Computing (Honours), AACOM — units completed per
-        category, checked against Programs & Courses' published requirements
-        for the catalogue year you select below. Completed courses are
-        stored once and re-checked against whichever year you're viewing.
-      </p>
-
-      <form method="get" action="/">
-        <label for="year-select">Catalogue year</label>
+    </header>
+    <main>
+      <form method="get" action="/" class="year-form">
+        <label for="year-select">Start year</label>
         <select id="year-select" name="year">
           {years.map((y) => (
             <option value={y} selected={y === year}>{y}</option>
@@ -42,9 +40,29 @@ const progress = getProgress(year);
         <button>View</button>
       </form>
 
+      <section class="upload-panel" aria-label="import from transcript">
+        <h2>Import from a transcript</h2>
+        {uploadError && (
+          <p role="alert" class="missing">
+            Couldn't read that as a PDF — try again with your ANU Statement of
+            Result.
+          </p>
+        )}
+        <p>
+          Upload your Statement of Result and review the courses it detects
+          before anything is saved.
+        </p>
+        <form method="post" action="/upload-preview" enctype="multipart/form-data">
+          <input type="hidden" name="year" value={year} />
+          <label for="transcript">Statement of Result (PDF)</label>
+          <input id="transcript" name="transcript" type="file" accept="application/pdf" required />
+          <button>Preview detected courses</button>
+        </form>
+      </section>
+
       <section aria-label="progress by category">
         {progress.map((cat) => (
-          <div class="category">
+          <div class="category" id={categoryAnchor(cat.category)}>
             <h2>{cat.category}</h2>
             <p>{cat.completedUnits} / {cat.requiredUnits} units</p>
             <progress value={cat.completedUnits} max={cat.requiredUnits} aria-label={`${cat.category} progress`}>
@@ -60,6 +78,7 @@ const progress = getProgress(year);
                     {course.courseCode} ({course.units}u)
                     <form method="post" action={`/api/completed-courses/${course.id}/delete`}>
                       <input type="hidden" name="year" value={year} />
+                      <input type="hidden" name="category" value={cat.category} />
                       <button type="submit">Remove</button>
                     </form>
                   </li>

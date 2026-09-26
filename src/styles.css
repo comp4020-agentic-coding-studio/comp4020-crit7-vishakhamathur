@@ -29,7 +29,7 @@ body {
 }
 
 main {
-  max-width: 46rem;
+  max-width: 62rem;
   margin: 0 auto;
   padding: 0 1.5rem;
 }
@@ -46,7 +46,7 @@ nav[aria-label="site"] {
   display: flex;
   gap: 1.75rem;
   align-items: center;
-  max-width: 46rem;
+  max-width: 62rem;
   margin: 0 auto;
   padding: 1.25rem 1.5rem 0;
 }
@@ -54,7 +54,7 @@ nav[aria-label="site"] {
 nav[aria-label="site"] a {
   color: var(--unigrey);
   font-weight: 700;
-  font-size: 0.85rem;
+  font-size: 1.15rem;
   letter-spacing: 0.03em;
   text-transform: uppercase;
   text-decoration: none;
@@ -69,40 +69,89 @@ nav[aria-label="site"] a:focus-visible {
   border-block-end-color: var(--anu-gold);
 }
 
-/* Masthead: crest + title bar with a full-width gold rule underneath the
-   intro paragraph, like a university letterhead. */
-main > h1,
-.masthead {
+/* Hero banner: full-width gold band right under the nav, on every page —
+   crest + title on the tracker, the README's own h1 + intro on /readme/. */
+.hero {
+  background: linear-gradient(135deg, var(--anu-gold) 0%, #7a5c0a 100%);
+  margin-block-start: 1.1rem;
+  padding-block: 2.5rem 3rem;
+}
+
+.hero-inner {
+  max-width: 62rem;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+.hero h1 {
+  color: var(--white);
+  margin: 0;
+  font-size: 2.75rem;
+}
+
+.hero .masthead {
   display: flex;
   align-items: center;
   gap: 1rem;
-  margin: 1.1rem 0 0;
-  padding-block-end: 1.1rem;
 }
 
-.masthead h1 {
+.hero .masthead h1 {
   margin: 0;
 }
 
-.masthead img {
+.hero .masthead img {
   flex-shrink: 0;
 }
 
-main > h1,
-.masthead h1 {
-  font-size: 2.1rem;
+/* "Import from a transcript" panel: pinned to the top of the action area,
+   ahead of the progress bars, since it's the fast path most people should
+   reach for instead of typing courses in one at a time. */
+.upload-panel {
+  margin-block: 1.75rem 2rem;
+  padding: 1.5rem 2.25rem 2.25rem;
+  background: var(--anu-gold-tint);
+  border-radius: 0.7rem;
 }
 
-main > p:first-of-type {
-  color: var(--unigrey);
-  max-width: 38rem;
-  margin: 1.1rem 0 0;
-  padding-block-end: 1.6rem;
-  border-block-end: 4px solid var(--anu-gold);
+.upload-panel h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.4rem;
 }
 
-/* Catalogue-year toolbar: the form right after the intro paragraph */
-main > p:first-of-type + form {
+.upload-panel form {
+  margin-block-start: 0.75rem;
+}
+
+/* Native file inputs render an ugly platform-grey button by default;
+   ::file-selector-button is the standard hook for restyling just that part
+   without any JS. */
+input[type="file"] {
+  padding: 0.4rem;
+}
+
+input[type="file"]::file-selector-button {
+  padding: 0.65rem 1.25rem;
+  margin-inline-end: 0.85rem;
+  font: inherit;
+  font-weight: 700;
+  font-size: 0.8rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--white);
+  background: var(--anu-gold);
+  border: 1px solid var(--anu-gold);
+  border-radius: 0.4rem;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+input[type="file"]::file-selector-button:hover {
+  background: var(--unigrey);
+  border-color: var(--unigrey);
+}
+
+/* Catalogue-year toolbar */
+.year-form {
   display: flex;
   flex-wrap: wrap;
   gap: 0.6rem 0.75rem;
@@ -113,15 +162,16 @@ main > p:first-of-type + form {
   border-radius: 0.6rem;
 }
 
-main > p:first-of-type + form label {
+.year-form label {
   color: var(--black);
   font-weight: 700;
-  font-size: 0.85rem;
+  font-size: 1.1rem;
 }
 
-main > p:first-of-type + form select {
+.year-form select {
   flex: 1;
   min-width: 8rem;
+  font-size: 1.1rem;
 }
 
 /* Category rows: flat, no card chrome — name + stat on one line, a thick
@@ -384,12 +434,15 @@ button:active {
 }
 
 @media (max-width: 32rem) {
-  main > h1,
-  .masthead h1 {
-    font-size: 1.6rem;
+  .hero {
+    padding-block: 1.75rem 2.25rem;
   }
 
-  .masthead img {
+  .hero h1 {
+    font-size: 2rem;
+  }
+
+  .hero .masthead img {
     width: 40px;
     height: 42px;
   }
@@ -429,4 +482,31 @@ button:active {
   .course-list form {
     margin-inline-start: 0;
   }
+}
+
+/* /upload-preview: detected-course review rows */
+.detected-courses {
+  list-style: none;
+  padding-inline-start: 0;
+  margin-block: 1rem;
+}
+
+.detected-courses li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1.2rem;
+  padding-block: 0.7rem;
+  border-block-end: 1px solid var(--anu-gold-tint);
+}
+
+.detected-courses li:last-child {
+  border-block-end: none;
+}
+
+.detected-courses label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.9rem;
 }

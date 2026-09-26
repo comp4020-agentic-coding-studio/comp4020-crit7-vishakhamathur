@@ -21,6 +21,15 @@ amount to a genuine structural difference. Completed courses are stored
 once and re-checked against whichever year's rules you're viewing, so
 switching years doesn't mean re-entering your history.
 
+Typing in every completed course by hand is tedious, so you can instead
+upload a PDF Statement of Result: it extracts every ANU-shaped course code
+(`COMP1600`, `MATH1005`, ...) from the PDF's text layer, guesses each one's
+category (matched against Core's fixed course list for the year you're
+viewing; anything else falls back to General Electives), and shows a review
+page — nothing is saved until you confirm. From there you can uncheck rows
+that don't belong, fix a wrong unit count, or override a wrong category
+guess before adding them.
+
 ## What good looks like here
 
 A progress bar per category is an honest answer to "how close am I" for
@@ -46,11 +55,31 @@ What's enforced by `spec/tracker.test.ts` and `spec/invariants.test.ts`:
 - the usual accessibility/structure floor (nav landmark, one heading, alt
   text, viewport, axe) on every page
 
+What's enforced by `spec/course-extraction.test.ts` and
+`spec/pdf-import.test.ts` (the transcript-import feature):
+
+- course codes are extracted from real PDF text (not a pasted-text
+  fallback) and de-duplicated
+- a code on the current year's Core list is pre-guessed as Core; anything
+  else falls back to General Electives
+- uploading previews the detected rows without writing anything; only the
+  confirmed subset is committed, using whatever category/units the review
+  form was submitted with (so a user's override of the guessed category
+  wins)
+- re-uploading the same transcript doesn't re-add a course you already
+  confirmed
+
 What's a judgement call, not a test: whether the 2023–2027 model (rather
 than every year AACOM has ever published — the archive goes back to at
 least 2016) is the right scope, and whether unit-totals are a fair stand-in
 for categories this prototype doesn't fully model (Specialisation,
-Foundational).
+Foundational). For transcript import specifically: every detected course
+defaults to 6 units (the common case, editable before confirming) rather
+than trying to parse a per-course unit value out of the PDF; and
+category-guessing only recognises categories with a fixed course list
+(just Core, this week) — a real specialisation's required/elective courses
+aren't modelled, so anything outside Core lands in General Electives
+regardless of which specialisation it actually belongs to.
 
 ## What I chose not to build
 
@@ -69,9 +98,22 @@ Foundational).
   usable public API for this; scraping either would be a fragile dependency
   for a one-week slice. Their real published requirements are the seed data
   instead.
-- **Duplicate-course detection.** Adding the same course twice to a category
-  double-counts its units. Not guarded against — a small enough foot-gun for
-  a single-user prototype that I chose not to spend the week on it.
+- **Duplicate-course detection on the manual form.** Adding the same course
+  twice to a category double-counts its units. Not guarded against — a
+  small enough foot-gun for a single-user prototype that I chose not to
+  spend the week on it. Transcript import is deliberately stricter than
+  this (it excludes anything already recorded, so re-uploading the same
+  PDF is a no-op) — an inconsistency between the two entry points, not an
+  oversight, since a re-uploaded transcript is a genuinely common case a
+  hand-typed duplicate isn't.
+- **OCR / scanned transcripts.** Transcript import reads a PDF's real text
+  layer; it assumes a genuine ANU-generated Statement of Result, not a
+  scanned image. A scan with no text layer just extracts nothing.
+- **Full specialisation/elective course-list modelling.** Only Core has a
+  fixed, checkable course list. A real specialisation's own required and
+  elective courses aren't seeded, so transcript import can't tell a
+  specialisation course from a general elective — see the judgement-call
+  note above.
 
 ## Attribution
 
