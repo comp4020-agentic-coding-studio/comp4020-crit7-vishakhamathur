@@ -21,7 +21,10 @@ const progress = getProgress(year);
       <a href="/readme/">About</a>
     </nav>
     <main>
-      <h1>Degree progress tracker</h1>
+      <div class="masthead">
+        <img src="/anu-crest.svg" alt="Australian National University crest" width="56" height="58" />
+        <h1>Degree progress tracker</h1>
+      </div>
       <p>
         Bachelor of Advanced Computing (Honours), AACOM — units completed per
         category, checked against Programs & Courses' published requirements
@@ -70,14 +73,14 @@ const progress = getProgress(year);
       <h2>Add a completed course</h2>
       <form method="post" action="/api/completed-courses">
         <input type="hidden" name="year" value={year} />
-        <label for="category">Category</label>
-        <select id="category" name="category" required>
-          {progress.map((cat) => <option value={cat.category}>{cat.category}</option>)}
-        </select>
         <label for="courseCode">Course code</label>
         <input id="courseCode" name="courseCode" required maxlength="12" placeholder="COMP4020" />
         <label for="units">Units</label>
         <input id="units" name="units" type="number" min="1" max="48" value="6" required />
+        <label for="category">Category</label>
+        <select id="category" name="category" required>
+          {progress.map((cat) => <option value={cat.category}>{cat.category}</option>)}
+        </select>
         <button>Add</button>
       </form>
     </main>

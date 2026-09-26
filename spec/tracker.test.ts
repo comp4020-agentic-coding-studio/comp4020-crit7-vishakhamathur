@@ -74,4 +74,29 @@ describe("degree tracker", () => {
     // ...but COMP2100 is compulsory in both years, so it's no longer missing.
     expect(missingLine).not.toContain("COMP2100");
   });
+
+  it("models 2025 as a genuine transition year with a smaller 42-unit Core", async () => {
+    const text = await get("/?year=2025");
+    // COMP2100, added to Core earlier in this suite, carries over here too.
+    expect(text).toContain("6 / 42 units");
+
+    const missingLine = text.match(/Missing: [^<]+/)?.[0];
+    // 2025 requires both the old COMP1600 and the newly-added COMP2400 at once...
+    expect(missingLine).toContain("COMP1600");
+    expect(missingLine).toContain("COMP2400");
+    // ...but not COMP2120 (drops out this year) or COMP3630 (not added until 2026).
+    expect(missingLine).not.toContain("COMP2120");
+    expect(missingLine).not.toContain("COMP3630");
+  });
+
+  it("models 2023 with the same 48-unit Core as 2024", async () => {
+    const text = await get("/?year=2023");
+    // COMP2100, added to Core earlier in this suite, carries over here too.
+    expect(text).toContain("6 / 48 units");
+
+    const missingLine = text.match(/Missing: [^<]+/)?.[0];
+    expect(missingLine).toContain("COMP1600");
+    expect(missingLine).toContain("COMP4450");
+    expect(missingLine).not.toContain("COMP2100");
+  });
 });

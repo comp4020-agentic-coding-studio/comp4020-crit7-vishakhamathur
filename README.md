@@ -8,11 +8,18 @@ every time you want to know how close you are to graduating, whether you've
 missed a compulsory course, or whether you're done with your electives.
 
 Categories and their unit requirements are seeded from the real AACOM
-structure for two catalogue years — 2024 (my own commencing year) and 2027
-(the currently published one) — since the two turn out to differ in which
-courses are compulsory. Completed courses are stored once and re-checked
-against whichever year's rules you're viewing, so switching years doesn't
-mean re-entering your history.
+structure for every catalogue year Programs & Courses currently has
+archived for it — 2023, 2024 (my own commencing year), 2025, 2026, and 2027
+(the currently published one) — since students commencing in different
+years are genuinely bound by different rules. 2025 turned out to be a real
+mid-transition year: its compulsory block is 42 units across 7 courses
+(COMP1600 and the newly-added COMP2400 required at once) rather than the
+48-unit/8-course Core every other modelled year has. 2023 shares 2024's
+exact 48-unit/8-course Core and category shape — its own page just slices
+the remaining "further study" units into finer either/or bullets that don't
+amount to a genuine structural difference. Completed courses are stored
+once and re-checked against whichever year's rules you're viewing, so
+switching years doesn't mean re-entering your history.
 
 ## What good looks like here
 
@@ -31,14 +38,19 @@ What's enforced by `spec/tracker.test.ts` and `spec/invariants.test.ts`:
 - adding a completed course persists across a reload and moves its
   category's progress bar
 - Core's missing-course list drops a course once it's added, and a course
-  compulsory in both catalogue years counts under both
+  compulsory across multiple catalogue years counts under all of them
+- 2025's smaller, 7-course Core is modelled distinctly from 2024's and
+  2027's 8-course ones, not approximated as a copy of either
+- 2023 shares 2024's 48-unit/8-course Core rather than being silently
+  omitted or mismodelled
 - the usual accessibility/structure floor (nav landmark, one heading, alt
   text, viewport, axe) on every page
 
-What's a judgement call, not a test: whether the two-year model (rather than
-every year AACOM has ever published) is the right scope, and whether
-unit-totals are a fair stand-in for categories this prototype doesn't fully
-model (Specialisation, Foundational).
+What's a judgement call, not a test: whether the 2023–2027 model (rather
+than every year AACOM has ever published — the archive goes back to at
+least 2016) is the right scope, and whether unit-totals are a fair stand-in
+for categories this prototype doesn't fully model (Specialisation,
+Foundational).
 
 ## What I chose not to build
 
@@ -60,3 +72,9 @@ model (Specialisation, Foundational).
 - **Duplicate-course detection.** Adding the same course twice to a category
   double-counts its units. Not guarded against — a small enough foot-gun for
   a single-user prototype that I chose not to spend the week on it.
+
+## Attribution
+
+`public/anu-crest.svg` is ["Arms of the Australian National
+University"](https://commons.wikimedia.org/wiki/File:Arms_of_the_Australian_National_University.svg)
+from Wikimedia Commons, licensed CC BY-SA 4.0.
