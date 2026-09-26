@@ -1,8 +1,11 @@
 ---
-import { listMessages } from "../lib/db";
+import { getProgress, listYears } from "../lib/db";
 import "../styles.css";
 
-const messages = listMessages();
+const years = listYears();
+const requested = Number(Astro.url.searchParams.get("year"));
+const year = years.includes(requested) ? requested : years.includes(2024) ? 2024 : years[0];
+const progress = getProgress(year);
 ---
 
 <!doctype html>
@@ -10,44 +13,73 @@ const messages = listMessages();
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>COMP4020 prototype</title>
+    <title>Degree progress tracker</title>
   </head>
   <body>
     <nav aria-label="site">
-      <a href="/">Guestbook</a>
+      <a href="/">Tracker</a>
       <a href="/readme/">About</a>
     </nav>
     <main>
-      <h1>Guestbook</h1>
+      <h1>Degree progress tracker</h1>
       <p>
-        A minimal full-stack starter: messages live in SQLite on the machine's
-        volume (state survives a reload and a redeploy), and new messages
-        appear in every open tab over a server-sent-events stream — open this
-        page twice and sign it in one. Replace all of this with your own
-        prototype.
+        Bachelor of Advanced Computing (Honours), AACOM — units completed per
+        category, checked against Programs & Courses' published requirements
+        for the catalogue year you select below. Completed courses are
+        stored once and re-checked against whichever year you're viewing.
       </p>
-      <form method="post" action="/api/messages">
-        <label for="body">Leave a message</label>
-        <input id="body" name="body" required maxlength="500" />
-        <button>Sign</button>
+
+      <form method="get" action="/">
+        <label for="year-select">Catalogue year</label>
+        <select id="year-select" name="year">
+          {years.map((y) => (
+            <option value={y} selected={y === year}>{y}</option>
+          ))}
+        </select>
+        <button>View</button>
       </form>
-      <ul id="messages">
-        {messages.map((message) => <li>{message.body}</li>)}
-      </ul>
+
+      <section aria-label="progress by category">
+        {progress.map((cat) => (
+          <div class="category">
+            <h2>{cat.category}</h2>
+            <p>{cat.completedUnits} / {cat.requiredUnits} units</p>
+            <progress value={cat.completedUnits} max={cat.requiredUnits} aria-label={`${cat.category} progress`}>
+              {cat.completedUnits} of {cat.requiredUnits} units
+            </progress>
+            {cat.missingRequiredCourses.length > 0 && (
+              <p class="missing">Missing: {cat.missingRequiredCourses.join(", ")}</p>
+            )}
+            {cat.courses.length > 0 && (
+              <ul class="course-list">
+                {cat.courses.map((course) => (
+                  <li>
+                    {course.courseCode} ({course.units}u)
+                    <form method="post" action={`/api/completed-courses/${course.id}/delete`}>
+                      <input type="hidden" name="year" value={year} />
+                      <button type="submit">Remove</button>
+                    </form>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        ))}
+      </section>
+
+      <h2>Add a completed course</h2>
+      <form method="post" action="/api/completed-courses">
+        <input type="hidden" name="year" value={year} />
+        <label for="category">Category</label>
+        <select id="category" name="category" required>
+          {progress.map((cat) => <option value={cat.category}>{cat.category}</option>)}
+        </select>
+        <label for="courseCode">Course code</label>
+        <input id="courseCode" name="courseCode" required maxlength="12" placeholder="COMP4020" />
+        <label for="units">Units</label>
+        <input id="units" name="units" type="number" min="1" max="48" value="6" required />
+        <button>Add</button>
+      </form>
     </main>
-    <script>
-      // The live half of the demo: subscribe to the SSE stream and prepend
-      // messages as they arrive. The form itself needs none of this — its
-      // POST + redirect re-renders the submitting tab from SQLite; this
-      // stream is how every other tab finds out.
-      const list = document.querySelector("#messages");
-      const source = new EventSource("/api/events");
-      source.addEventListener("message", (event) => {
-        const message = JSON.parse(event.data);
-        const item = document.createElement("li");
-        item.textContent = message.body;
-        list?.prepend(item);
-      });
-    </script>
   </body>
 </html>

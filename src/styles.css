@@ -35,6 +35,34 @@ button {
   font: inherit;
 }
 
-#messages {
-  padding-inline-start: 1.2rem;
+.category {
+  margin-block: 1.5rem;
+}
+
+.category h2 {
+  margin-block-end: 0.25rem;
+}
+
+progress {
+  width: 100%;
+  height: 0.75rem;
+}
+
+.missing {
+  color: #b00020;
+}
+
+.course-list {
+  list-style: none;
+  padding-inline-start: 0;
+}
+
+.course-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.course-list form {
+  margin: 0;
 }
