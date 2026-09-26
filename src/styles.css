@@ -69,8 +69,7 @@ nav[aria-label="site"] a:focus-visible {
   border-block-end-color: var(--anu-gold);
 }
 
-/* Hero banner: full-width gold band right under the nav, on every page —
-   crest + title on the tracker, the README's own h1 + intro on /readme/. */
+/* Hero banner: full-width gold band right under the nav, on the tracker page. */
 .hero {
   background: linear-gradient(135deg, var(--anu-gold) 0%, #7a5c0a 100%);
   margin-block-start: 1.1rem;
