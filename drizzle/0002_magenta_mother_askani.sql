@@ -1,0 +1,1 @@
+ALTER TABLE `completed_courses` ADD `course_name` text;

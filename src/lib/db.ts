@@ -57,8 +57,13 @@ export function addCompletedCourse(
   category: string,
   courseCode: string,
   units: number,
+  courseName?: string,
 ): CompletedCourse {
-  return db.insert(completedCourses).values({ category, courseCode, units }).returning().get();
+  return db
+    .insert(completedCourses)
+    .values({ category, courseCode, units, courseName: courseName?.trim() || null })
+    .returning()
+    .get();
 }
 
 export function deleteCompletedCourse(id: number): void {
@@ -107,35 +112,33 @@ export function getProgress(year: number): CategoryProgress[] {
 // catalogue year Programs & Courses currently has archived for this
 // prototype: 2023, 2024 (the student's actual commencing year), 2025, 2026,
 // and 2027 (P&C's current published year), pulled from
-// https://programsandcourses.anu.edu.au/<year>/program/AACOM. Fixed seed
+// https://programsandcourses.anu.edu.au/<year>/program/AACOM, collapsed
+// into 5 fixed categories (Compulsory, Comp Elective, University Elective,
+// Specialisation, Project) rather than P&C's own per-year category names —
+// e.g. Compulsory merges that year's Introductory/Foundational units in
+// with Core's (keeping Core's fixed course list), and University Elective
+// merges Supplementary/ICT-Related in with General Electives. Fixed seed
 // data, not user-editable — only completed courses are entered
 // interactively.
 //
 // 2023 and 2024 share an identical Core (same 8 compulsory courses, 48
-// units) and identical Introductory/Specialisation/Capstone/Electives
-// totals; 2023's own page just slices the remaining 30 "further study"
-// units into four finer either/or bullets where 2024's collapses them into
-// three named categories. Same simplification this file already applies
-// elsewhere (OR-choices and specialisation tracks aren't modelled course by
-// course), so 2023 reuses 2024's exact category shape and Core list rather
-// than inventing a fourth bucket to mirror wording that isn't a genuine
-// structural difference.
+// units) and identical category totals overall; 2023's own P&C page just
+// slices the remaining "further study" units into four finer either/or
+// bullets where 2024's collapses them into three named categories — not a
+// genuine structural difference, so 2023 reuses 2024's numbers.
 //
 // 2025 is a genuine mid-transition year, not a copy-paste of 2024 or 2026:
-// its compulsory block is 42 units across 7 courses (COMP1600 and the
-// newly-added COMP2400 both required at once), one unit total short of the
-// 48-unit/8-course Core every other modelled year has — COMP2120 rejoins
-// and COMP1600 finally drops out from 2026 onward. 2026 and 2027 turned out
-// to be identical in structure once fetched, so they share the same Core
-// list below.
+// its Core block is 42 units across 7 courses (COMP1600 and the
+// newly-added COMP2400 both required at once) rather than the 48-unit/
+// 8-course Core every other modelled year has — COMP2120 rejoins and
+// COMP1600 finally drops out from 2026 onward. 2026 and 2027 turned out to
+// be identical in structure once fetched, so they share the same numbers.
 //
-// Seeding is per-year and additive: a database that already has some years
-// (e.g. an earlier deploy that only knew 2024/2027) gets exactly the
-// missing years inserted on the next boot, without touching existing rows —
-// completed courses and previously-seeded years are left alone.
-function seedDegreeRulesIfEmpty(): void {
-  const existingYears = new Set(listYears());
-
+// This is fixed reference data, not something a student ever edits, and
+// nothing else references degreeRules.id (joins are by category-name
+// string) — so re-deriving it from scratch on every boot is safe, and
+// simpler than reconciling an old category shape in place.
+function seedDegreeRules(): void {
   const core2024 = JSON.stringify([
     "COMP1600",
     "COMP2100",
@@ -166,55 +169,60 @@ function seedDegreeRulesIfEmpty(): void {
     "COMP4450",
   ]);
 
-  const allRows = [
-    // 2023 — same category shape and Core list as 2024 (see comment above).
-    { year: 2023, category: "Introductory", requiredUnits: 18, requiredCourses: null },
-    { year: 2023, category: "Core", requiredUnits: 48, requiredCourses: core2024 },
-    { year: 2023, category: "Specialisation", requiredUnits: 24, requiredCourses: null },
-    { year: 2023, category: "Further COMP Study", requiredUnits: 6, requiredCourses: null },
-    { year: 2023, category: "Upper-Level COMP", requiredUnits: 18, requiredCourses: null },
-    { year: 2023, category: "Supplementary", requiredUnits: 6, requiredCourses: null },
-    { year: 2023, category: "Capstone", requiredUnits: 24, requiredCourses: null },
-    { year: 2023, category: "General Electives", requiredUnits: 48, requiredCourses: null },
-    // 2024
-    { year: 2024, category: "Introductory", requiredUnits: 18, requiredCourses: null },
-    { year: 2024, category: "Core", requiredUnits: 48, requiredCourses: core2024 },
-    { year: 2024, category: "Specialisation", requiredUnits: 24, requiredCourses: null },
-    { year: 2024, category: "Further COMP Study", requiredUnits: 6, requiredCourses: null },
-    { year: 2024, category: "Upper-Level COMP", requiredUnits: 18, requiredCourses: null },
-    { year: 2024, category: "Supplementary", requiredUnits: 6, requiredCourses: null },
-    { year: 2024, category: "Capstone", requiredUnits: 24, requiredCourses: null },
-    { year: 2024, category: "General Electives", requiredUnits: 48, requiredCourses: null },
-    // 2025 — transition year: smaller (42-unit) Core, no separate
-    // Supplementary category (folded into an 18-unit Further COMP Study).
-    { year: 2025, category: "Introductory", requiredUnits: 18, requiredCourses: null },
-    { year: 2025, category: "Core", requiredUnits: 42, requiredCourses: core2025 },
-    { year: 2025, category: "Specialisation", requiredUnits: 24, requiredCourses: null },
-    { year: 2025, category: "Further COMP Study", requiredUnits: 18, requiredCourses: null },
-    { year: 2025, category: "Upper-Level COMP", requiredUnits: 18, requiredCourses: null },
-    { year: 2025, category: "Capstone", requiredUnits: 24, requiredCourses: null },
-    { year: 2025, category: "General Electives", requiredUnits: 48, requiredCourses: null },
-    // 2026
-    { year: 2026, category: "Foundational", requiredUnits: 18, requiredCourses: null },
-    { year: 2026, category: "Core", requiredUnits: 48, requiredCourses: core2026And2027 },
-    { year: 2026, category: "Specialisation", requiredUnits: 24, requiredCourses: null },
-    { year: 2026, category: "COMP Electives", requiredUnits: 18, requiredCourses: null },
-    { year: 2026, category: "ICT-Related", requiredUnits: 12, requiredCourses: null },
-    { year: 2026, category: "Capstone", requiredUnits: 24, requiredCourses: null },
-    { year: 2026, category: "General Electives", requiredUnits: 48, requiredCourses: null },
-    // 2027
-    { year: 2027, category: "Foundational", requiredUnits: 18, requiredCourses: null },
-    { year: 2027, category: "Core", requiredUnits: 48, requiredCourses: core2026And2027 },
-    { year: 2027, category: "Specialisation", requiredUnits: 24, requiredCourses: null },
-    { year: 2027, category: "COMP Electives", requiredUnits: 18, requiredCourses: null },
-    { year: 2027, category: "ICT-Related", requiredUnits: 12, requiredCourses: null },
-    { year: 2027, category: "Capstone", requiredUnits: 24, requiredCourses: null },
-    { year: 2027, category: "General Electives", requiredUnits: 48, requiredCourses: null },
+  // Comp Elective is 7 courses (one compulsory 4000-level, two either
+  // 3000-or-4000-level, the rest any level) — a level-by-level breakdown
+  // this prototype doesn't model (see the README's judgement-call note), but
+  // the unit total is fixed regardless: 7 courses x 6 units = 42. University
+  // Elective is a flat 48 units — General Electives alone, not merged with
+  // anything computing-related. Both are the same across every catalogue
+  // year modelled, unlike Compulsory's list.
+  const COMP_ELECTIVE_UNITS = 42;
+  const UNIVERSITY_ELECTIVE_UNITS = 48;
+
+  const yearRows = (year: number, compulsoryUnits: number, compulsoryList: string) => [
+    { year, category: "Compulsory", requiredUnits: compulsoryUnits, requiredCourses: compulsoryList },
+    { year, category: "Comp Elective", requiredUnits: COMP_ELECTIVE_UNITS, requiredCourses: null },
+    { year, category: "University Elective", requiredUnits: UNIVERSITY_ELECTIVE_UNITS, requiredCourses: null },
+    { year, category: "Specialisation", requiredUnits: 24, requiredCourses: null },
+    { year, category: "Project", requiredUnits: 24, requiredCourses: null },
   ];
 
-  const missingRows = allRows.filter((row) => !existingYears.has(row.year));
-  if (missingRows.length > 0) {
-    db.insert(degreeRules).values(missingRows).run();
+  const allRows = [
+    // 2023/2024: Compulsory = 18 (Introductory) + 48 (Core).
+    ...yearRows(2023, 66, core2024),
+    ...yearRows(2024, 66, core2024),
+    // 2025: Compulsory = 18 (Introductory) + 42 (Core).
+    ...yearRows(2025, 60, core2025),
+    // 2026/2027: Compulsory = 18 (Foundational) + 48 (Core).
+    ...yearRows(2026, 66, core2026And2027),
+    ...yearRows(2027, 66, core2026And2027),
+  ];
+
+  db.delete(degreeRules).run();
+  db.insert(degreeRules).values(allRows).run();
+}
+seedDegreeRules();
+
+// Maps every category name this app has ever seeded degreeRules with onto
+// the current 5-category scheme, so a completed course entered under an old
+// name (Core, General Electives, ...) still matches its category after the
+// rename above. Idempotent: once applied, no row is stored under an old
+// name anymore, so re-running finds nothing to update.
+const CATEGORY_RENAMES: Record<string, string> = {
+  Introductory: "Compulsory",
+  Foundational: "Compulsory",
+  Core: "Compulsory",
+  "Further COMP Study": "Comp Elective",
+  "Upper-Level COMP": "Comp Elective",
+  "COMP Electives": "Comp Elective",
+  Supplementary: "University Elective",
+  "ICT-Related": "University Elective",
+  "General Electives": "University Elective",
+  Capstone: "Project",
+};
+function migrateCompletedCourseCategories(): void {
+  for (const [from, to] of Object.entries(CATEGORY_RENAMES)) {
+    db.update(completedCourses).set({ category: to }).where(eq(completedCourses.category, from)).run();
   }
 }
-seedDegreeRulesIfEmpty();
+migrateCompletedCourseCategories();

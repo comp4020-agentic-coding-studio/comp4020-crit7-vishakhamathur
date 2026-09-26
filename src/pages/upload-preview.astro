@@ -4,6 +4,7 @@ import {
   extractCourseCodes,
   guessCategory,
 } from "../lib/course-extraction";
+import { courseLabel, lookupCourseName } from "../lib/course-names";
 import { listCompletedCourses, listDegreeRules, listYears } from "../lib/db";
 import { extractPdfText } from "../lib/parse-transcript";
 import "../styles.css";
@@ -79,30 +80,37 @@ const rows = codes.map((code) => ({ code, category: guessCategory(code, rules) }
             <ul class="detected-courses">
               {rows.map((row) => (
                 <li>
-                  <label>
+                  <label class="course-title">
                     <input type="checkbox" name="include" value={row.code} checked />
-                    {row.code}
+                    {courseLabel(row.code)}
                   </label>
-                  <label>
-                    Units
-                    <input
-                      type="number"
-                      name={`units_${row.code}`}
-                      min="1"
-                      max="48"
-                      value="6"
-                    />
-                  </label>
-                  <label>
-                    Category
-                    <select name={`category_${row.code}`}>
-                      {rules.map((rule) => (
-                        <option value={rule.category} selected={rule.category === row.category}>
-                          {rule.category}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
+                  <input
+                    type="hidden"
+                    name={`courseName_${row.code}`}
+                    value={lookupCourseName(row.code) ?? ""}
+                  />
+                  <div class="course-fields">
+                    <label>
+                      Units
+                      <input
+                        type="number"
+                        name={`units_${row.code}`}
+                        min="1"
+                        max="48"
+                        value="6"
+                      />
+                    </label>
+                    <label>
+                      Category
+                      <select name={`category_${row.code}`}>
+                        {rules.map((rule) => (
+                          <option value={rule.category} selected={rule.category === row.category}>
+                            {rule.category}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  </div>
                 </li>
               ))}
             </ul>

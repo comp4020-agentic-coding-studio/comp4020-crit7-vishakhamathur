@@ -4,8 +4,9 @@ import { describe, expect, inject, it } from "vitest";
 // plumbing test (spec/README.md: "it goes when the starter does"). These
 // prove the crit's core testable flow — add a completed course, watch its
 // category's units move, reload, verify it's still there — plus the two
-// promises specific to this prototype: Core flags a missing compulsory
-// course by name, and a completed course carries across catalogue years.
+// promises specific to this prototype: Compulsory flags a missing
+// compulsory course by name, and a completed course carries across
+// catalogue years.
 const baseUrl = inject("baseUrl");
 
 // Astro checks form POSTs carry a same-origin Origin header (CSRF
@@ -20,8 +21,10 @@ const post = (path: string, body: URLSearchParams) =>
 
 const get = (path: string) => fetch(new URL(path, baseUrl)).then((res) => res.text());
 
+const missingLine = (text: string) => text.match(/Missing: [^<]+/)?.[0];
+
 describe("degree tracker", () => {
-  it("Core starts with every 2024 compulsory course missing", async () => {
+  it("Compulsory starts with every 2024 compulsory course missing", async () => {
     const text = await get("/?year=2024");
     expect(text).toContain("COMP1600");
     expect(text).toContain("COMP4450");
@@ -31,7 +34,7 @@ describe("degree tracker", () => {
     const res = await post(
       "/api/completed-courses",
       new URLSearchParams({
-        category: "General Electives",
+        category: "University Elective",
         courseCode: "COMP4020",
         units: "6",
         year: "2024",
@@ -44,14 +47,14 @@ describe("degree tracker", () => {
   it("persists the course and its category's units across a reload", async () => {
     const text = await get("/?year=2024");
     expect(text).toContain("COMP4020");
-    expect(text).toContain("6 / 48 units");
+    expect(text).toContain("6 / 48 units"); // 2024 University Elective (flat 48 units every year)
   });
 
-  it("drops a compulsory course from Core's missing list once it's added", async () => {
+  it("drops a compulsory course from Compulsory's missing list once it's added", async () => {
     await post(
       "/api/completed-courses",
       new URLSearchParams({
-        category: "Core",
+        category: "Compulsory",
         courseCode: "COMP2100",
         units: "6",
         year: "2024",
@@ -59,44 +62,44 @@ describe("degree tracker", () => {
     );
 
     const text = await get("/?year=2024");
-    expect(text).not.toContain("Missing: COMP1600, COMP2100");
+    expect(missingLine(text)).not.toContain("COMP2100");
     expect(text).toContain("COMP1600");
   });
 
   it("carries a completed course over when switching catalogue years", async () => {
     const text = await get("/?year=2027");
-    expect(text).toContain("6 / 48 units"); // General Electives carried over too
-    expect(text).toContain('class="course-list"><li>COMP2100'); // Core carried over too
+    expect(text).toContain("6 / 48 units"); // 2027 University Elective carried over too
+    expect(text).toContain('class="course-list"><li>COMP2100'); // Compulsory carried over too
 
     // COMP2400 is only compulsory from 2027, so it's still missing here...
-    const missingLine = text.match(/Missing: [^<]+/)?.[0];
-    expect(missingLine).toContain("COMP2400");
+    const line = missingLine(text);
+    expect(line).toContain("COMP2400");
     // ...but COMP2100 is compulsory in both years, so it's no longer missing.
-    expect(missingLine).not.toContain("COMP2100");
+    expect(line).not.toContain("COMP2100");
   });
 
-  it("models 2025 as a genuine transition year with a smaller 42-unit Core", async () => {
+  it("models 2025 as a genuine transition year with a smaller 60-unit Compulsory", async () => {
     const text = await get("/?year=2025");
-    // COMP2100, added to Core earlier in this suite, carries over here too.
-    expect(text).toContain("6 / 42 units");
+    // COMP2100, added to Compulsory earlier in this suite, carries over here too.
+    expect(text).toContain("6 / 60 units");
 
-    const missingLine = text.match(/Missing: [^<]+/)?.[0];
+    const line = missingLine(text);
     // 2025 requires both the old COMP1600 and the newly-added COMP2400 at once...
-    expect(missingLine).toContain("COMP1600");
-    expect(missingLine).toContain("COMP2400");
+    expect(line).toContain("COMP1600");
+    expect(line).toContain("COMP2400");
     // ...but not COMP2120 (drops out this year) or COMP3630 (not added until 2026).
-    expect(missingLine).not.toContain("COMP2120");
-    expect(missingLine).not.toContain("COMP3630");
+    expect(line).not.toContain("COMP2120");
+    expect(line).not.toContain("COMP3630");
   });
 
-  it("models 2023 with the same 48-unit Core as 2024", async () => {
+  it("models 2023 with the same 66-unit Compulsory as 2024", async () => {
     const text = await get("/?year=2023");
-    // COMP2100, added to Core earlier in this suite, carries over here too.
-    expect(text).toContain("6 / 48 units");
+    // COMP2100, added to Compulsory earlier in this suite, carries over here too.
+    expect(text).toContain("6 / 66 units");
 
-    const missingLine = text.match(/Missing: [^<]+/)?.[0];
-    expect(missingLine).toContain("COMP1600");
-    expect(missingLine).toContain("COMP4450");
-    expect(missingLine).not.toContain("COMP2100");
+    const line = missingLine(text);
+    expect(line).toContain("COMP1600");
+    expect(line).toContain("COMP4450");
+    expect(line).not.toContain("COMP2100");
   });
 });

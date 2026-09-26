@@ -11,11 +11,11 @@ export function extractCourseCodes(text: string): string[] {
   return [...new Set(text.match(COURSE_CODE_RE) ?? [])];
 }
 
-// A course counts as Core (or any other category with a fixed course list)
-// if it appears in that category's requiredCourses for the given year;
-// everything else falls to General Electives — categories without a fixed
-// list (Specialisation, Foundational, ...) aren't modelled course-by-course,
-// same simplification the rest of this app already makes.
+// A course counts as Compulsory (or any other category with a fixed course
+// list) if it appears in that category's requiredCourses for the given
+// year; everything else falls to University Elective — categories without a
+// fixed list (Specialisation, Comp Elective, ...) aren't modelled
+// course-by-course, same simplification the rest of this app already makes.
 export function guessCategory(code: string, rules: DegreeRule[]): string {
   const upper = code.toUpperCase();
   for (const rule of rules) {
@@ -24,9 +24,9 @@ export function guessCategory(code: string, rules: DegreeRule[]): string {
     if (required.some((c) => c.toUpperCase() === upper)) return rule.category;
   }
   return (
-    rules.find((r) => r.category === "General Electives")?.category ??
+    rules.find((r) => r.category === "University Elective")?.category ??
     rules.find((r) => r.requiredCourses === null)?.category ??
-    "General Electives"
+    "University Elective"
   );
 }
 

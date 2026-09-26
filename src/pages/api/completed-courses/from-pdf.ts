@@ -13,10 +13,11 @@ export const POST: APIRoute = async ({ request, redirect }) => {
   for (const rawCode of form.getAll("include").map(String)) {
     const courseCode = rawCode.trim().toUpperCase().slice(0, 12);
     const category = String(form.get(`category_${rawCode}`) ?? "").trim();
+    const courseName = String(form.get(`courseName_${rawCode}`) ?? "").trim();
     const units = Number(form.get(`units_${rawCode}`));
 
     if (courseCode && category && Number.isFinite(units) && units > 0) {
-      addCompletedCourse(category, courseCode, units);
+      addCompletedCourse(category, courseCode, units, courseName);
     }
   }
 

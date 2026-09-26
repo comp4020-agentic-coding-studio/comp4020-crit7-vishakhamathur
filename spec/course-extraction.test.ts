@@ -33,25 +33,25 @@ describe("extractCourseCodes", () => {
 
 describe("guessCategory", () => {
   const rules = [
-    rule("Core", ["COMP2100", "COMP4450"]),
+    rule("Compulsory", ["COMP2100", "COMP4450"]),
     rule("Specialisation", null),
-    rule("General Electives", null),
+    rule("University Elective", null),
   ];
 
   it("matches a course against whichever category has a fixed course list", () => {
-    expect(guessCategory("COMP2100", rules)).toBe("Core");
+    expect(guessCategory("COMP2100", rules)).toBe("Compulsory");
   });
 
   it("is case-insensitive when matching against the fixed list", () => {
-    expect(guessCategory("comp2100", rules)).toBe("Core");
+    expect(guessCategory("comp2100", rules)).toBe("Compulsory");
   });
 
-  it("falls back to General Electives for anything not on a fixed list", () => {
-    expect(guessCategory("TEST9999", rules)).toBe("General Electives");
+  it("falls back to University Elective for anything not on a fixed list", () => {
+    expect(guessCategory("TEST9999", rules)).toBe("University Elective");
   });
 
-  it("falls back to the first null-course-list category when General Electives isn't seeded", () => {
-    const rulesWithoutElectives = [rule("Core", ["COMP2100"]), rule("Specialisation", null)];
+  it("falls back to the first null-course-list category when University Elective isn't seeded", () => {
+    const rulesWithoutElectives = [rule("Compulsory", ["COMP2100"]), rule("Specialisation", null)];
     expect(guessCategory("TEST9999", rulesWithoutElectives)).toBe("Specialisation");
   });
 });

@@ -1,5 +1,6 @@
 ---
 import { getProgress, listYears } from "../lib/db";
+import { courseLabel } from "../lib/course-names";
 import { categoryAnchor } from "../lib/slug";
 import "../styles.css";
 
@@ -8,6 +9,12 @@ const requested = Number(Astro.url.searchParams.get("year"));
 const year = years.includes(requested) ? requested : years.includes(2024) ? 2024 : years[0];
 const progress = getProgress(year);
 const uploadError = Astro.url.searchParams.get("error") === "upload";
+
+// Not enforced (this prototype doesn't track individual course levels), just
+// a reminder of the real composition behind Comp Elective's unit total.
+const categoryNotes: Record<string, string> = {
+  "Comp Elective": "7 courses: 1 must be 4000-level, 2 must be 3000- or 4000-level, the rest any level.",
+};
 ---
 
 <!doctype html>
@@ -65,17 +72,20 @@ const uploadError = Astro.url.searchParams.get("error") === "upload";
           <div class="category" id={categoryAnchor(cat.category)}>
             <h2>{cat.category}</h2>
             <p>{cat.completedUnits} / {cat.requiredUnits} units</p>
+            {categoryNotes[cat.category] && <p class="category-note">{categoryNotes[cat.category]}</p>}
             <progress value={cat.completedUnits} max={cat.requiredUnits} aria-label={`${cat.category} progress`}>
               {cat.completedUnits} of {cat.requiredUnits} units
             </progress>
             {cat.missingRequiredCourses.length > 0 && (
-              <p class="missing">Missing: {cat.missingRequiredCourses.join(", ")}</p>
+              <p class="missing">
+                Missing: {cat.missingRequiredCourses.map((code) => courseLabel(code)).join(", ")}
+              </p>
             )}
             {cat.courses.length > 0 && (
               <ul class="course-list">
                 {cat.courses.map((course) => (
                   <li>
-                    {course.courseCode} ({course.units}u)
+                    {courseLabel(course.courseCode, course.courseName)} ({course.units}u)
                     <form method="post" action={`/api/completed-courses/${course.id}/delete`}>
                       <input type="hidden" name="year" value={year} />
                       <input type="hidden" name="category" value={cat.category} />
@@ -94,6 +104,8 @@ const uploadError = Astro.url.searchParams.get("error") === "upload";
         <input type="hidden" name="year" value={year} />
         <label for="courseCode">Course code</label>
         <input id="courseCode" name="courseCode" required maxlength="12" placeholder="COMP4020" />
+        <label for="courseName">Course name</label>
+        <input id="courseName" name="courseName" maxlength="120" placeholder="Human-Centred Technology" />
         <label for="units">Units</label>
         <input id="units" name="units" type="number" min="1" max="48" value="6" required />
         <label for="category">Category</label>

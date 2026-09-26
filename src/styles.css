@@ -204,6 +204,14 @@ section[aria-label="progress by category"] {
   font-weight: 700;
 }
 
+.category-note {
+  flex-basis: 100%;
+  margin: 0;
+  color: var(--unigrey);
+  font-size: 0.8rem;
+  font-style: italic;
+}
+
 progress {
   flex-basis: 100%;
   display: block;
@@ -305,6 +313,8 @@ section[aria-label="progress by category"] + h2 + form {
   grid-template-areas:
     "code-label units-label"
     "code-input units-input"
+    "name-label name-label"
+    "name-input name-input"
     "cat-label cat-label"
     "cat-input cat-input"
     "button button";
@@ -327,6 +337,14 @@ section[aria-label="progress by category"] + h2 + form label[for="courseCode"] {
 
 section[aria-label="progress by category"] + h2 + form input#courseCode {
   grid-area: code-input;
+}
+
+section[aria-label="progress by category"] + h2 + form label[for="courseName"] {
+  grid-area: name-label;
+}
+
+section[aria-label="progress by category"] + h2 + form input#courseName {
+  grid-area: name-input;
 }
 
 section[aria-label="progress by category"] + h2 + form label[for="units"] {
@@ -454,6 +472,8 @@ button:active {
       "code-input"
       "units-label"
       "units-input"
+      "name-label"
+      "name-input"
       "cat-label"
       "cat-input"
       "button";
@@ -484,29 +504,57 @@ button:active {
   }
 }
 
-/* /upload-preview: detected-course review rows */
+/* /upload-preview: detected-course review rows. Each row is its own card:
+   a bold title line (checkbox + code/name, the thing the user is deciding
+   whether to keep) above a compact strip of the two fields worth adjusting
+   (units, category) — nothing asks the user to retype a name that's already
+   shown in the title. */
 .detected-courses {
   list-style: none;
   padding-inline-start: 0;
-  margin-block: 1rem;
+  margin-block: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
 .detected-courses li {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 0.9rem 1.1rem;
+  background: var(--white);
+  border: 1px solid var(--anu-gold-tint);
+  border-radius: 0.5rem;
+}
+
+.detected-courses .course-title {
+  display: flex;
   align-items: center;
-  gap: 0.5rem 1.2rem;
-  padding-block: 0.7rem;
-  border-block-end: 1px solid var(--anu-gold-tint);
+  gap: 0.6rem;
+  font-weight: 700;
+  font-size: 0.95rem;
 }
 
-.detected-courses li:last-child {
-  border-block-end: none;
+.detected-courses .course-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.5rem;
+  padding-inline-start: 1.7rem;
 }
 
-.detected-courses label {
+.detected-courses .course-fields label {
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  font-size: 0.9rem;
+  color: var(--unigrey);
+  font-weight: 500;
+  font-size: 0.85rem;
+}
+
+.detected-courses .course-fields input,
+.detected-courses .course-fields select {
+  flex: initial;
+  min-width: 7rem;
+  padding: 0.4rem 0.6rem;
 }

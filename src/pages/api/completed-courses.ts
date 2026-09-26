@@ -11,11 +11,12 @@ export const POST: APIRoute = async ({ request, redirect }) => {
     .trim()
     .toUpperCase()
     .slice(0, 12);
+  const courseName = String(form.get("courseName") ?? "").trim();
   const units = Number(form.get("units"));
   const year = String(form.get("year") ?? "").trim();
 
   if (category && courseCode && Number.isFinite(units) && units > 0) {
-    addCompletedCourse(category, courseCode, units);
+    addCompletedCourse(category, courseCode, units, courseName);
   }
 
   return redirect(`/?year=${encodeURIComponent(year)}`, 303);

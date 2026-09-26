@@ -31,6 +31,7 @@ export const completedCourses = sqliteTable("completed_courses", {
   id: int().primaryKey({ autoIncrement: true }),
   category: text().notNull(),
   courseCode: text("course_code").notNull(),
+  courseName: text("course_name"),
   units: int().notNull(),
   createdAt: text("created_at")
     .notNull()
